@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Neon Traffic Jam</title>
+    <style>
+        /* Cyberpunk dark styling */
+        body { 
+            text-align: center; 
+            font-family: 'Courier New', Courier, monospace; 
+            background-color: #050505; 
+            color: #00ffcc; 
+            margin-top: 30px; 
+        }
+        
+        /* The 3-lane highway game window */
+        #gameArea {
+            width: 400px;
+            height: 450px;
+            border: 4px solid #ff007f;
+            margin: 0 auto;
+            position: relative;
+            background-color: #11111a;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 0 25px rgba(255, 0, 127, 0.4);
+        }
+
+        /* Lane divider lines to make it look like a road */
+        .lane-line {
+            position: absolute;
+            width: 4px;
+            height: 450px;
+            background: repeating-linear-gradient(to bottom, #444 0px, #444 20px, transparent 20px, transparent 40px);
+        }
+        #line1 { left: 133px; }
+        #line2 { left: 266px; }
+
+        /* The Player Car Emoji */
+        #car {
+            font-size: 35px;
+            position: absolute;
+            bottom: 30px;
+            left: 45px; /* Starts in Lane 1 */
+            transition: left 0.15s ease-in-out; /* Smooth lane switching */
+        }
+
+        /* Energy Orb (Bonus) */
+        #orb {
+            font-size: 30px;
+            position: absolute;
+            top: -40px;
+            left: 45px;
+        }
+
+        /* Hazard Cone */
+        #hazard {
+            font-size: 30px;
+            position: absolute;
+            top: -40px;
+            left: 175px;
+        }
+
+        /* Scoreboard styling */
+        #scoreboard {
+            font-size: 22px;
+            margin-bottom: 12px;
+            color: #00ffcc;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🚗 Neon Traffic Jam ⚡</h1>
+    <p>Use the <b>Left ⬅️</b> and <b>Right ➡️</b> Arrow Keys to switch lanes, collect orbs (⚡), and dodge cones (🚧)!</p>
+    
+    <div id="scoreboard">Score: <span id="score">0</span></div>
+
+    <div id="gameArea">
+        <div class="lane-line" id="line1"></div>
+        <div class="lane-line" id="line2"></div>
+        
+        <!-- Using the car emoji here -->
+        <div id="car">🚗</div>
+        <div id="orb">⚡</div>
+        <div id="hazard">🚧</div>
+    </div>
+
+    <script>
+        const car = document.getElementById("car");
+        const orb = document.getElementById("orb");
+        const hazard = document.getElementById("hazard");
+        const scoreDisplay = document.getElementById("score");
+        
+        let score = 0;
+        let currentLane = 1; // 0 = Left Lane, 1 = Middle Lane, 2 = Right Lane
+        
+        // Exact pixel positions for the 3 lanes
+        const lanePositions = [45, 175, 305];
+
+        // Step 1: Switch lanes when Left or Right Arrow keys are pressed
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "ArrowLeft" && currentLane > 0) {
+                currentLane--; // Move left
+            } else if (event.key === "ArrowRight" && currentLane < 2) {
+                currentLane++; // Move right
+            }
+            // Update the car's physical position on screen instantly
+            car.style.left = lanePositions[currentLane] + "px";
+        });
+
+        // Step 2: Game Engine Loop (Moves items down the road)
+        let gameLoop = setInterval(function() {
+            // Get current vertical positions of orb and hazard
+            let orbTop = parseInt(window.getComputedStyle(orb).getPropertyValue("top"));
+            let hazardTop = parseInt(window.getComputedStyle(hazard).getPropertyValue("top"));
+            
+            // Move items down the screen
+            orb.style.top = (orbTop + 4) + "px";
+            hazard.style.top = (hazardTop + 5) + "px";
+
+            // If orb goes past the bottom, reset it to a random lane at the top
+            if (orbTop > 450) {
+                orb.style.top = "-40px";
+                let randomLane = Math.floor(Math.random() * 3);
+                orb.style.left = lanePositions[randomLane] + "px";
+            }
+
+            // If hazard goes past the bottom, reset it to a random lane at the top
+            if (hazardTop > 450) {
+                hazard.style.top = "-40px";
+                let randomLane = Math.floor(Math.random() * 3);
+                hazard.style.left = lanePositions[randomLane] + "px";
+            }
+
+            // Check Collision with Energy Orb (Scoring points)
+            let orbLeft = parseInt(window.getComputedStyle(orb).getPropertyValue("left"));
+            if (orbTop > 360 && orbTop < 410) {
+                // Check if car is in the same lane as the orb
+                if (Math.abs(orbLeft - lanePositions[currentLane]) < 10) {
+                    score += 1;
+                    scoreDisplay.innerHTML = score;
+                    orb.style.top = "-40px"; // Reset orb
+                    let randomLane = Math.floor(Math.random() * 3);
+                    orb.style.left = lanePositions[randomLane] + "px";
+                }
+            }
+
+            // Check Collision with Hazard Cone (Game Over!)
+            let hazardLeft = parseInt(window.getComputedStyle(hazard).getPropertyValue("left"));
+            if (hazardTop > 360 && hazardTop < 410) {
+                // Check if car is in the same lane as the hazard
+                if (Math.abs(hazardLeft - lanePositions[currentLane]) < 10) {
+                    alert("Crash! You hit a traffic cone. Final Score: " + score);
+                    resetGame();
+                }
+            }
+
+        }, 30);
+
+        // Function to reset the game data on crash
+        function resetGame() {
+            score = 0;
+            scoreDisplay.innerHTML = score;
+            currentLane = 1;
+            car.style.left = lanePositions[currentLane] + "px";
+            orb.style.top = "-40px";
+            hazard.style.top = "-200px";
+        }
+    </script>
+
+</body>
+</html>
